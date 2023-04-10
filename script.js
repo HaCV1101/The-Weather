@@ -5,8 +5,7 @@ const timezone = document.getElementById("time-zone");
 const countryE1 = document.getElementById("country");
 const weatherForecastE1 = document.getElementById("weather-forecast");
 const currentTempE1 = document.getElementById("current-temp");
-// const API_KEY = "CmU6KKmDGfEHXRTxL51WmxGRrhMNj3ka";
-const API_KEY = "0c9714a0ff2cf7a4d29563feb0100069";
+
 const days = [
   "Sunday",
   "Monday",
@@ -56,8 +55,7 @@ function getWeatherData() {
   navigator.geolocation.getCurrentPosition((success) => {
     let { latitude, longitude } = success.coords;
     fetch(
-      `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&exclude=hourly,minutely&units=metric&appid=${API_KEY}`
-      // `https://dataservice.accuweather.com/forecasts/v1/daily/5day/353412?apikey=CmU6KKmDGfEHXRTxL51WmxGRrhMNj3ka&language=en&detail=true`
+      `https://api.openweathermap.org/data/2.5/onecall?lat=21.0071107&lon=105.846911&exclude=hourly,minutely&units=metric&appid=49cc8c821cd2aff9af04c9f98c36eb74`
     )
       .then((res) => res.json())
       .then((data) => {
@@ -66,13 +64,10 @@ function getWeatherData() {
       });
   });
 }
-
 function showWeatherData(data) {
-  let { humidity, pressure } = data.main;
-  let { speed } = data.wind;
-  let { sunrise, sunset } = data.sys;
-  timezone.innerHTML = data.sys.country + "/" + data.name;
-  countryE1.innerHTML = data.coord.lat + "N " + data.coord.lon + "E";
+  let { humidity, pressure, wind_speed, sunrise, sunset } = data.current;
+  timezone.innerHTML = data.timezone;
+  countryE1.innerHTML = data.lat + "N " + data.lon + "E";
 
   let timeRise = new Date(sunrise * 1000);
   let timeSet = new Date(sunset * 1000);
@@ -85,6 +80,7 @@ function showWeatherData(data) {
   let sunsetM = timeSet.getMinutes();
   let hoursIn12HrFormatSS = sunsetH >= 13 ? sunsetH % 12 : sunsetH;
   let ampmSS = sunsetH >= 12 ? "PM" : "AM";
+  var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   currentWeatherItemsE1.innerHTML = ` <div class="weather-item">
         <div>Humidity</div>
@@ -96,18 +92,41 @@ function showWeatherData(data) {
     </div>
     <div class="weather-item">
         <div>Wind Speed</div>
-        <div>${speed}</div>
+        <div>${wind_speed}</div>
     </div>
     <div class="weather-item">
         <div>Sunrise</div>
         <div id ='sunrise'>${hoursIn12HrFormatSR}:${sunriseM} <span>${ampmSR}</span></div>
-    </div> 
-    <div class="weather-item">
+        </div> 
+        <div class="weather-item">
         <div>Sunset</div>
         <div id ='sunset'>${hoursIn12HrFormatSS}:${sunsetM}<span >${ampmSS}</span></div>
-    </div>
-    `;
-
+        </div>
+        `;
   let otherDayForcast = "";
-  //   data.daily.foreach();
+  data.daily.forEach((day, idx) => {
+    let date = new Date(day.dt * 1000);
+    var dayName = days[date.getDay()];
+    if (idx == 0) {
+      currentTempE1.innerHTML = `
+      <img src="https://openweathermap.org/img/wn/${day.weather[0].icon}@4x.png" alt="weather icon" class="w-icon">
+      <div class="others">
+          <div class="day">${dayName}</div>
+          <div class="temp">Night -  ${day.temp.night}&#176; C</div>
+          <div class="temp">Day - ${day.temp.day}&#176; C</div>
+      </div>
+      `;
+    } else {
+      otherDayForcast += `
+      <div class="weather-forecast-item">
+      <div class="day">${dayName}</div>
+      <img src="https://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png" alt="weather icon" class="w-icon">
+      <div class="temp">Night - ${day.temp.night}&#176; C</div>
+      <div class="temp">Day - ${day.temp.day}&#176; C</div>
+  </div>
+      `;
+    }
+  });
+
+  weatherForecastE1.innerHTML = otherDayForcast;
 }
